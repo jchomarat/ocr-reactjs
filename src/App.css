@@ -1,0 +1,65 @@
+.App {
+  text-align: center;
+}
+
+.App-logo {
+  height: 80px;
+}
+
+.App-header {
+  background-color: #222;
+  height: 80px;
+  padding: 20px;
+  color: white;
+}
+
+.App-intro {
+  font-size: large;
+  text-align: left;
+  margin-left: 20px;
+  margin-top: 20px;
+}
+
+.form-wrapper {
+  width: 500px;
+}
+
+.form-wrapper label {
+  font-size: 14px;
+}
+
+legend {
+  background-color: #000;
+  color: #fff;
+  padding: 3px 6px;
+}
+
+.results-wrapper {
+  width: 90%;
+}
+
+.results-wrapper textarea {
+  margin: 2px;
+  width: 100%;
+  height: 400px;
+  border: none;
+}
+
+.results-wrapper img {
+  width: 500px;
+}
+
+.tooltip {
+  text-decoration:none;
+  position:relative;
+}
+.tooltip span {
+  display:none;
+  background-color: antiquewhite;
+  padding: 10px;
+  border: 1px solid lightslategray;
+}
+.tooltip:hover span {
+  position:fixed;
+  overflow:hidden;
+}
