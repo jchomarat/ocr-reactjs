@@ -1,6 +1,8 @@
 # Overview
 
-Sample Reactjs project to use OCR, an Azure cognitive service.
+Sample Reactjs project to use OCR, an Azure cognitive service:
+
+![Demo](./doc/demo.gif)
 
 # Installation
 
