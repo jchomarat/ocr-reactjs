@@ -2,13 +2,7 @@ import React, { Component } from 'react';
 import { Loader } from 'react-overlay-loader';
 import logo from './logo.svg';
 import './App.css';
-
-const actionsList = {
-  ocr: {
-    url: process.env.REACT_APP_BASE_OCR_URL,
-    secret: process.env.REACT_APP_BASE_OCR_SECRET
-  }
-};
+import ocr from './ocr';
 
 var wordsInDocument = null;
 
@@ -19,7 +13,8 @@ class App extends Component {
       loading: false,
       picture: null,
       action: null,
-      apiResult: ""
+      apiResult: "",
+      proxyUrl: ""
     }
   }
 
@@ -28,68 +23,28 @@ class App extends Component {
   }
 
   setAction =e => {
-    this.setState({ action: e.target.value })
+    if (e.target.value === "local") {
+      this.setState({ action: e.target.value, proxyUrl:`Proxy url: ${process.env.REACT_APP_LOCAL_CORS_PROXY}` })
+    }
+    else {
+      this.setState({ action: e.target.value, proxyUrl: "" })
+    }
   }
 
   compute = e => {
     this.setState({loading: true}, () => {
-      var reader = new FileReader();
-      reader.onload = () => {
-        var action = actionsList[this.state.action];
-        fetch(action.url,
-          {
-              method: "POST",
-              body: reader.result,
-              headers: {
-                  'Ocp-Apim-Subscription-Key': action.secret,
-                  'Content-Type': 'application/octet-stream',
-              }
-          })
-          .then (response => response.json())
-          .then (data => {
-            this.processResults(data);
-          })
-      };
-      reader.readAsArrayBuffer(this.state.picture);
+      let o = new ocr(
+          this.state.action, 
+          this.state.picture,  
+          document.getElementById("raw-output"), 
+          document.getElementById("visual-output"));
+      
+        o.compute()
+        .then((words) => {
+          wordsInDocument = words;
+          this.setState({loading: false});
+        })
     });
-  }
-
-  processResults(output) {
-    var ctx = document.getElementById("visual-output").getContext("2d");
-    var reader = new FileReader();
-    var img = new Image();
-    wordsInDocument = [];
-    img.onload = () => {
-        // scale canvas to image
-        ctx.canvas.width = img.width;
-        ctx.canvas.height = img.height;
-        // draw image
-        ctx.drawImage(img, 0, 0, ctx.canvas.width, ctx.canvas.height);
-        // draw boxes => look for all "word" properties
-        output.regions.forEach(region => {
-          region.lines.forEach(line => {
-            line.words.forEach(word => {
-              let coordinates = word.boundingBox.split(",");
-              ctx.rect(coordinates[0], coordinates[1], coordinates[2], coordinates[3]);
-              ctx.stroke();
-              wordsInDocument.push({
-                text: word.text,
-                x: coordinates[0]*1, 
-                y: coordinates[1]*1, 
-                w: coordinates[2]*1, 
-                h: coordinates[3]*1
-              });
-            });
-          });
-        });
-
-        // End process
-        this.setState({loading: false, apiResult: JSON.stringify(output, null, 2)});
-    }
-    reader.onload = () => {
-      img.src = reader.result;
-    };
-    reader.readAsDataURL(this.state.picture);
   }
 
   canvasClick = e => {
@@ -145,8 +100,10 @@ class App extends Component {
               Type of computation:
               <select onChange={this.setAction} id="select-action">
                 <option>Select action</option>
-                <option value="ocr">OCR</option>
+                <option value="remote">OCR Azure</option>
+                <option value="local">OCR Local</option>
               </select>
+              <span className="local-proxy" id="local-proxy">{this.state.proxyUrl}</span>
             </label>
             <br /><br />
             <input type="button" value="Compute!" onClick={this.compute}  />&nbsp;
@@ -155,7 +112,7 @@ class App extends Component {
           <br />
           <fieldset className="results-wrapper">
             <legend>Raw results</legend>
-            <textarea value={this.state.apiResult} readOnly={true}></textarea>
+            <textarea id="raw-output" readOnly={true}></textarea>
           </fieldset>
           <br />
           <fieldset className="results-wrapper">

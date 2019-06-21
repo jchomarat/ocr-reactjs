@@ -53,13 +53,19 @@ legend {
   text-decoration:none;
   position:relative;
 }
+
 .tooltip span {
   display:none;
   background-color: antiquewhite;
   padding: 10px;
   border: 1px solid lightslategray;
 }
+
 .tooltip:hover span {
   position:fixed;
   overflow:hidden;
+}
+
+.local-proxy {
+  padding-left: 20px;
 }
