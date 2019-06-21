@@ -67,6 +67,12 @@ REACT_APP_LOCAL_CORS_PROXY=http://localhost:8080/
 
 You can now try the **OCR Local** version!
 
+You just need to launch ocr-reactjs without HTTPS
+
+```sh
+npm start
+```
+
 # Misc
 
 Sample project under MIT - do whatever you want with it :)
