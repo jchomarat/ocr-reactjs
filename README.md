@@ -1,3 +1,9 @@
+# Update July 2019
+
+Following updates on both the container image and the Azure cognitive services, both approachs of this sample (using the Azure service and using a local docker container) are using the same service.
+
+However, the services signature are not exactly the same (for instance to send a picture, the Azure Service uses a binary stream whereas the docker container service is using formData). Once things are in sync, I will update this code.
+
 # Overview
 
 Sample Reactjs project to use OCR, an Azure cognitive service:

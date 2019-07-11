@@ -39,10 +39,16 @@ class App extends Component {
           document.getElementById("raw-output"), 
           document.getElementById("visual-output"));
       
-        o.compute()
-        .then((words) => {
-          wordsInDocument = words;
-          this.setState({loading: false});
+      o.createJob()
+        .then((jobUrl) => {
+          o.checkJob(jobUrl)
+              .then((json) => {
+                o.completeJob(json)
+                    .then((words) => {
+                      wordsInDocument = words;
+                      this.setState({loading: false});
+                    });
+              });
         })
     });
   }
@@ -74,12 +80,7 @@ class App extends Component {
   }
 
   clear = e => {
-    this.setState({loading: false, apiResult: "", picture: null, action: null}, () => {
-      let canvas = document.getElementById("visual-output");
-      const ctx = canvas.getContext('2d');
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      document.getElementById("select-action").selectedIndex = 0;
-    });
+    location.reload();
   }
 
   render() {

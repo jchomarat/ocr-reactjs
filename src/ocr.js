@@ -41,47 +41,86 @@ class ocr {
         })
     }
 
-    async compute() {
-        if (this.isRemote)
-            return await this.computeRemote();
-        else
-           return await this.computeLocal();
+    async createJob() {
+        var serviceSignature;
+        if (this.isRemote) {
+            serviceSignature = await this.getRemoteServiceSignature();
+        }
+        else {
+            serviceSignature = this.getLocalServiceSignature();
+        }
+
+        let response = await fetch(this.service.url, serviceSignature);
+        if (response.status !== 202) {
+            return new Error("Error creating the job");
+        }
+        else {
+            // Return the operation ID
+            return response.headers.get("Operation-Location");
+        }
     }
 
-    async computeRemote() {
+    async getRemoteServiceSignature(){
         let fileArrayByffer = await this.readImageBytes();
-        let response = await fetch(this.service.url,
-            {
-                method: "POST",
-                body: fileArrayByffer,
-                headers: {
-                    'Ocp-Apim-Subscription-Key': this.service.secret,
-                    'Content-Type': 'application/octet-stream',
-                },
-                //mode: "no-cors"
-            })
-        let json = await response.json();
-        return await this.processRemoteResults(json);
+        return {
+            method: "POST",
+            body: fileArrayByffer,
+            headers: {
+                'Ocp-Apim-Subscription-Key': this.service.secret,
+                'Content-Type': 'application/octet-stream',
+            }
+        };
     }
 
-    async computeLocal() {
-        //USe cors-anywehre for local proxy (to avoid CORS)
+    getLocalServiceSignature() {
         var formData = new FormData();
         formData.append("form", this.file);
         
-        let response = await fetch(this.service.url,
-            {
-                method: "POST",
-                body: formData,
-                headers: {
-                    'accept': 'application/json'
-                }
-            });
-        let json = await response.json();
-        return await this.processLocalResults(json);
+        return {
+            method: "POST",
+            body: formData,
+            headers: {
+                'accept': 'application/json'
+            }
+        };
     }
 
-    async processLocalResults(json) {
+    async checkJob(jobUrl) {
+        jobUrl = this.ensureJobUrlIsCorrect(jobUrl);
+        return new Promise((resolve, reject) => {
+            var poll = async() => {
+                let response = await fetch(jobUrl,
+                    {
+                        method: "GET",
+                        headers: {
+                            'Ocp-Apim-Subscription-Key': this.service.secret
+                        },
+                    });
+                let json = await response.json();
+                if (json.status === "Succeeded") {
+                    // Return the boxes found with text on the document
+                    resolve(json.recognitionResult);
+                }
+                else if (json.status === "Failed") {
+                    reject("An error occured");
+                }
+                else {
+                    setTimeout(poll, 1000);
+                }
+            };
+            poll();
+        });
+    }
+
+    ensureJobUrlIsCorrect(jobUrl) {
+        if (!this.isRemote) {
+            // Handle proxy to avoid cors issues
+            jobUrl = `${process.env.REACT_APP_LOCAL_CORS_PROXY}${jobUrl}`
+        }
+        return jobUrl;
+    }
+
+    async completeJob(json) {
         let img = await this.loadImageAsync();
         let allWords = [];
         // Set canvas width/height
@@ -91,8 +130,7 @@ class ocr {
         // Draw image
         ctx.drawImage(img, 0, 0, ctx.canvas.width, ctx.canvas.height);
 
-        // The local verson deos not return, for each box, x, y, width and height - but x,y for each corners, clockwise
-
+        // For each box, x, y for each corners, clockwise
         json.lines.forEach(line => {
             line.words.forEach(word => {
                 let x = word.boundingBox[0];
@@ -110,39 +148,6 @@ class ocr {
                         h: height
                     }
                 );
-            });
-        });
-        // Write raw json in textarea
-        this.rawResultsCanvas.value = JSON.stringify(json, null, 2);
-        return allWords;
-    }
-
-    async processRemoteResults(json) {
-        let img = await this.loadImageAsync();
-        let allWords = [];
-        // Set canvas width/height
-        let ctx = this.visualResultsCanvas.getContext("2d");
-        ctx.canvas.width = img.width;
-        ctx.canvas.height = img.height;
-        // Draw image
-        ctx.drawImage(img, 0, 0, ctx.canvas.width, ctx.canvas.height);
-
-        json.regions.forEach(region => {
-            region.lines.forEach(line => {
-                line.words.forEach(word => {
-                    let coordinates = word.boundingBox.split(",");
-                    ctx.rect(coordinates[0], coordinates[1], coordinates[2], coordinates[3]);
-                    ctx.stroke();
-                    allWords.push(
-                        {
-                            text: word.text,
-                            x: coordinates[0]*1, 
-                            y: coordinates[1]*1, 
-                            w: coordinates[2]*1, 
-                            h: coordinates[3]*1
-                        }
-                    );
-                });
             });
         });
         // Write raw json in textarea
