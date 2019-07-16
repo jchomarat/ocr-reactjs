@@ -6,7 +6,7 @@ Sample Reactjs project to use OCR, an Azure cognitive service:
 
 # Installation
 
-Clone the rep, then
+Clone the repo, then
 
 ```sh
 npm install
