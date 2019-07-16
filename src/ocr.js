@@ -13,7 +13,7 @@ class ocr {
         }
         else {
             this.service = {
-                url: `${process.env.REACT_APP_LOCAL_CORS_PROXY}${process.env.REACT_APP_LOCAL_ENDPOINT}`
+                url: process.env.REACT_APP_LOCAL_ENDPOINT
             }
         
         };
@@ -86,7 +86,6 @@ class ocr {
     }
 
     async checkJob(jobUrl) {
-        jobUrl = this.ensureJobUrlIsCorrect(jobUrl);
         return new Promise((resolve, reject) => {
             var poll = async() => {
                 let response = await fetch(jobUrl,
@@ -110,14 +109,6 @@ class ocr {
             };
             poll();
         });
-    }
-
-    ensureJobUrlIsCorrect(jobUrl) {
-        if (!this.isRemote) {
-            // Handle proxy to avoid cors issues
-            jobUrl = `${process.env.REACT_APP_LOCAL_CORS_PROXY}${jobUrl}`
-        }
-        return jobUrl;
     }
 
     async completeJob(json) {

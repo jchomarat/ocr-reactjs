@@ -1,9 +1,3 @@
-# Update July 2019
-
-Following updates on both the container image and the Azure cognitive services, both approachs of this sample (using the Azure service and using a local docker container) are using the same service.
-
-However, the services signature are not exactly the same (for instance to send a picture, the Azure Service uses a binary stream whereas the docker container service is using formData). Once things are in sync, I will update this code.
-
 # Overview
 
 Sample Reactjs project to use OCR, an Azure cognitive service:
@@ -31,45 +25,45 @@ Start the server
 HTTPS=true npm start
 ```
 
+Open a browser, and launch http://localhost:3000
+
 # Local OCR service
 
-Microsoft proposes some of the [cognitive services as docker images](https://docs.microsoft.com/en-us/azure/cognitive-services/cognitive-services-container-supportà) - so that, nothing is sent to Azure. This sample project also supports this mode, however, it requires a bit of configuration.
+Microsoft proposes some of the [cognitive services as docker images](https://docs.microsoft.com/en-us/azure/cognitive-services/cognitive-services-container-supportà) - so that, nothing is sent to Azure (except usage, but no data). This sample project also supports this mode, however, it requires a bit of configuration.
 
-First thing first,
-1. [Request access](https://docs.microsoft.com/en-us/azure/cognitive-services/cognitive-services-container-support#container-availability-in-azure-cognitive-services) to the repo that host these images (pick the service you want to use, for this tool, it will be *Recognize text*)
-2. Follow the guide to launch the docker image
+First you need to  [Request access](https://docs.microsoft.com/en-us/azure/cognitive-services/cognitive-services-container-support#container-availability-in-azure-cognitive-services) to the repo that host these images (pick the service you want to use, for this tool, it will be *Recognize text*)
 
-You can now proceed with this application configuration. Edit the .env file, and add the container endpoint, which is by default the one below:
+One thing I have noticed is this container does not set the HTTP headers in order to consume the services from a React app (if you do not know what CORS mean, [go there](https://fr.wikipedia.org/wiki/Cross-origin_resource_sharing))
 
-```js
-REACT_APP_LOCAL_ENDPOINT=http://localhost:5000/vision/v2.0/recognizeTextDirect?mode=printed
+Therefore, you will find in this repo a docker-compose configuration file that will allow to start a reverse proxy using Nginx, and make sure headers are set properly.
+
+Make sure Docker is installed, then open a terminal console and navigate to your repo.
+
+Rename *docker-compose-sample.yml* into *docker-compose.yml* and set {REGION} and apiKey {APIKEY} according to what you got from the registration
+
+```yml
+command: Eula=accept Billing=https://{REGION}?.api.cognitive.microsoft.com/vision/v2.0 ApiKey={API-KEY}
 ```
 
-As you can see, the mode used is **printed**. As of today (June 2019), this is the only supported mode.
-
-Then, in order to make everything work, we need to take care of CORS. Today, this image does not support it, and we are consuming services in JavaScript (if you do not know what CORS mean, [go there](https://fr.wikipedia.org/wiki/Cross-origin_resource_sharingà)).
-
-So to solve this, let's add a proxy to route our requests "server mode".
-
-I have used this [simple, and yet powerfull project](https://github.com/Rob--W/cors-anywhere) to achieve this.
-
-1. Create a folder somewehre on your hard drive
-2. Clone the following project, install dependencies and start it
+In *nginx.conf*, adapt the port you want Nginx to listen on (default is 8080)
 
 ```sh
-git clone https://github.com/Rob--W/cors-anywhere.git
-cd cors-anywhere
-npm install
-npm start
+listen 8080;
 ```
 
-The proxy, by default, should listen on http://localhost:8080
+Start the containers
 
-Go back the the *.env* file, and add the following parameter (adapating the URL if you have changed it)
+```sh
+/> docker-compose up -d
+```
+
+You can now proceed with this application configuration. Edit the .env file, and add the container endpoint, adapting only the port if you modified it in *nginx.conf*:
 
 ```js
-REACT_APP_LOCAL_CORS_PROXY=http://localhost:8080/
+REACT_APP_LOCAL_ENDPOINT=http://localhost:8080/vision/v2.0/recognizeText?mode=printed
 ```
+
+As you can see, the mode used is **printed**. As of today (July 2019), this is the only supported mode.
 
 You can now try the **OCR Local** version!
 
@@ -78,6 +72,12 @@ You just need to launch ocr-reactjs without HTTPS
 ```sh
 npm start
 ```
+
+Open a browser, and launch http://localhost:3000
+
+# Small note
+
+As of today (July 2019) both endpoints (in Azure and in the container) do not share the same input and output parameters. Therefore, this small application makes the distinction between "remote" (in Azure) and "local" (in the container).
 
 # Misc
 

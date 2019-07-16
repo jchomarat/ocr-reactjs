@@ -1,0 +1,21 @@
+version: '2.2'
+services:
+  
+  reversproxy: 
+    depends_on:
+      - recognizetext
+    image: nginx:latest
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+    ports:
+      - 8080:8080
+      - 443:443
+   
+  recognizetext:
+    image: "containerpreview.azurecr.io/microsoft/cognitive-services-recognize-text:latest"
+    command: Eula=accept Billing=https://{REGION}.api.cognitive.microsoft.com/vision/v2.0 ApiKey={API-KEY}
+    ports:
+      - 5000:5000
+    cpu_count: 1
+    mem_limit: 4000000000
+    

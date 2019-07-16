@@ -13,8 +13,7 @@ class App extends Component {
       loading: false,
       picture: null,
       action: null,
-      apiResult: "",
-      proxyUrl: ""
+      apiResult: ""
     }
   }
 
@@ -24,10 +23,10 @@ class App extends Component {
 
   setAction =e => {
     if (e.target.value === "local") {
-      this.setState({ action: e.target.value, proxyUrl:`Proxy url: ${process.env.REACT_APP_LOCAL_CORS_PROXY}` })
+      this.setState({ action: e.target.value })
     }
     else {
-      this.setState({ action: e.target.value, proxyUrl: "" })
+      this.setState({ action: e.target.value })
     }
   }
 
@@ -104,7 +103,6 @@ class App extends Component {
                 <option value="remote">OCR Azure</option>
                 <option value="local">OCR Local</option>
               </select>
-              <span className="local-proxy" id="local-proxy">{this.state.proxyUrl}</span>
             </label>
             <br /><br />
             <input type="button" value="Compute!" onClick={this.compute}  />&nbsp;
