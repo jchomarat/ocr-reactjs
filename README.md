@@ -15,7 +15,7 @@ npm install
 Rename *.env-sample* into *.env*, and add both values after provisioning "Computer vision" service on your [portal](https://portal.azure.com).
 
 ```js
-REACT_APP_BASE_OCR_URL={Endpoint URL}
+REACT_APP_BASE_OCR_URL=https://{REGION}.api.cognitive.microsoft.com/vision/v2.0/recognizeText?mode=Printed
 REACT_APP_BASE_OCR_SECRET={Key}
 ```
 
